@@ -6,6 +6,7 @@ pub mod relationship;
 pub mod sentence;
 pub mod vocabulary;
 pub mod reference_index;
+pub mod relationship_index;
 
 pub use grammar::GrammarPattern;
 pub use id::EntityId;
@@ -15,10 +16,128 @@ pub use relationship::{Relationship, RelationshipKind, RelationshipMetadata};
 pub use sentence::{GrammarMatch, Sentence, Token};
 pub use vocabulary::{PartOfSpeech, VocabularyEntry};
 pub use reference_index::ReferenceIndex;
+pub use relationship_index::RelationshipIndex;
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+fn relationship_index_can_query_by_source() {
+    let source = EntityId::new();
+    let target = EntityId::new();
+
+    let relationship =
+        Relationship::new(source, target, RelationshipKind::Uses);
+
+    let mut index = RelationshipIndex::new();
+    index.add(relationship.clone());
+
+    let relationships = index.by_source(source);
+
+    assert_eq!(relationships.len(), 1);
+    assert_eq!(relationships[0].target, target);
+    assert_eq!(relationships[0].kind, RelationshipKind::Uses);
+}
+
+#[test]
+fn relationship_index_can_query_by_target() {
+    let source = EntityId::new();
+    let target = EntityId::new();
+
+    let relationship =
+        Relationship::new(source, target, RelationshipKind::References);
+
+    let mut index = RelationshipIndex::new();
+    index.add(relationship.clone());
+
+    let relationships = index.by_target(target);
+
+    assert_eq!(relationships.len(), 1);
+    assert_eq!(relationships[0].source, source);
+    assert_eq!(relationships[0].kind, RelationshipKind::References);
+}
+
+#[test]
+fn relationship_index_can_filter_by_kind() {
+    let source = EntityId::new();
+    let target_a = EntityId::new();
+    let target_b = EntityId::new();
+
+    let uses = Relationship::new(
+        source,
+        target_a,
+        RelationshipKind::Uses,
+    );
+
+    let explains = Relationship::new(
+        source,
+        target_b,
+        RelationshipKind::Explains,
+    );
+
+    let mut index = RelationshipIndex::new();
+
+    index.add(uses);
+    index.add(explains);
+
+    let results = index.by_source_kind(
+        source,
+        RelationshipKind::Uses,
+    );
+
+    assert_eq!(results.len(), 1);
+    assert_eq!(results[0].target, target_a);
+}
+
+#[test]
+fn relationship_index_supports_bidirectional_queries() {
+    let source = EntityId::new();
+    let target = EntityId::new();
+
+    let relationship =
+        Relationship::new(source, target, RelationshipKind::ExampleOf);
+
+    let mut index = RelationshipIndex::new();
+    index.add(relationship);
+
+    assert_eq!(index.by_source(source).len(), 1);
+    assert_eq!(index.by_target(target).len(), 1);
+}
+
+#[test]
+fn relationship_index_can_remove_relationship() {
+    let source = EntityId::new();
+    let target = EntityId::new();
+
+    let relationship =
+        Relationship::new(source, target, RelationshipKind::Contains);
+
+    let mut index = RelationshipIndex::new();
+    index.add(relationship);
+
+    assert_eq!(index.len(), 1);
+
+    assert!(index.remove(
+        source,
+        target,
+        RelationshipKind::Contains,
+    ));
+
+    assert_eq!(index.len(), 0);
+    assert!(index.by_source(source).is_empty());
+    assert!(index.by_target(target).is_empty());
+}
+
+#[test]
+fn relationship_index_returns_empty_for_unknown_entities() {
+    let index = RelationshipIndex::new();
+    let unknown = EntityId::new();
+
+    assert!(index.by_source(unknown).is_empty());
+    assert!(index.by_target(unknown).is_empty());
+    assert!(index.is_empty());
+}
 
     #[test]
 fn reference_index_can_query_by_target() {
