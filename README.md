@@ -2,9 +2,9 @@
 
 ![KOTOBASE logo](/assets/kotobase_white.png)
 
-**Kotobase** (koʊðoʊbeɪs) or Codebase is a Japanese language learning tool built to fill the gap in finding a good platforms to conglomeratize and customize the way each person learns. It reads text the way a learner needs to see it — word by word, tag by tag — and attempts to read sentences as a breakable structure: click a word, see its grammar role, save it, link it to your own notes, and it's related words should connect themselves as a personal dictionary.
+**Kotobase** (koʊðoʊbeɪs) OR Codebase is a Japanese language learning tool built to fill the gap in finding a good platform to conglomeratize and customize the way each person learns. It reads text the way a learner needs to see it — word by word, tag by tag — and attempts to read sentences as a breakable structure: click a word, see its grammar role, save it, link it to your own notes, and its related words should connect themselves as a personal dictionary.
 
-This isn't meant to become a dictionary you visit, more a study space you maintain.
+This isn't meant to be a dictionary you visit — more a study space you maintain.
 
 ---
 <details>
@@ -12,7 +12,7 @@ This isn't meant to become a dictionary you visit, more a study space you mainta
 
 ---
 
-I started my journey studying Japanese before I even understood the fundamentals of language. By the time I grew to formalize and start my learning journey in earnest, I had filled books, downloaded 20 apps, consulted 50 websites and well beyond 100 videos. The heavy reliance on constantly swapping between tools to translate and understand using any resource available.
+I started my journey studying Japanese before I even understood the fundamentals of language. By the time I grew to formalize and start my learning journey in earnest, I had filled books, downloaded 20 apps, consulted 50 websites and well beyond 100 videos, constantly swapping between tools to translate and understand using any resource available.
 
 This was my effort to push a method to curb all of that. Most translation tools give you an output and nothing else — you get the meaning and lose the *mechanics*. Kotobase aims to start from the opposite direction and meet you where you learn - translation is the entry point, not the destination. Every piece of text you bring in becomes something you can take apart, annotate, and reconnect with over time.
 
@@ -20,8 +20,18 @@ This was my effort to push a method to curb all of that. Most translation tools 
 > - **Translate**, but also **understand why** — grammar and structure are separated instead of a simple output.
 > - **Tag and click** any word to see its role in context — particle, verb conjugation, counter, honorific, etc.
 > - **Take notes** the way you actually think — attach them to a word, a sentence, or a whole session.
-> - **Connect concepts** dynamically — the more you use it, the more you can link related words, patterns, and past notes for refernce.
+> - **Connect concepts** dynamically — the more you use it, the more you can link related words, patterns, and past notes for reference.
 > - **Make it yours** — layout, tagging behavior, note structure, and linking are meant to be shaped around how *you* study, not a fixed workflow.
+</details>
+
+---
+<details>
+  <summary> What's with the name?</summary>
+
+---
+
+**Kotobase** is a portmanteau of 言葉 (*kotoba*, "word") and *codebase* — pronounced (koʊðoʊbeɪs), landing right between the two. The title at the top, 言葉SE, is the same pun spelled a different way: 言葉 (kotoba) plus "SE" reads out to the same sound while nodding to the idea of treating language like something you build and maintain, the same way you'd treat a codebase.
+
 </details>
 
 ---
