@@ -9,7 +9,7 @@ pub mod vocabulary;
 pub use grammar::GrammarPattern;
 pub use id::EntityId;
 pub use kanji::KanjiEntry;
-pub use reference::{Reference, ReferenceLocation};
+pub use reference::{EntityType, Reference, ReferenceLocation};
 pub use relationship::{Relationship, RelationshipKind};
 pub use sentence::{GrammarMatch, Sentence, Token};
 pub use vocabulary::{PartOfSpeech, VocabularyEntry};
@@ -17,6 +17,86 @@ pub use vocabulary::{PartOfSpeech, VocabularyEntry};
 #[cfg(test)]
 mod tests {
     use super::*;
+
+        #[test]
+    fn reference_identifies_source_and_target_types() {
+        let note = EntityId::new();
+        let vocabulary = EntityId::new();
+
+        let reference = Reference::new(
+            note,
+            EntityType::Note,
+            vocabulary,
+            EntityType::Vocabulary,
+            ReferenceLocation::CharacterRange {
+                start: 10,
+                end: 12,
+            },
+        );
+
+        assert_eq!(reference.source, note);
+        assert_eq!(reference.source_type, EntityType::Note);
+
+        assert_eq!(reference.target, vocabulary);
+        assert_eq!(reference.target_type, EntityType::Vocabulary);
+    }
+
+    #[test]
+    fn reference_can_point_to_a_file_location() {
+        let file = EntityId::new();
+        let vocabulary = EntityId::new();
+
+        let reference = Reference::new(
+            file,
+            EntityType::File,
+            vocabulary,
+            EntityType::Vocabulary,
+            ReferenceLocation::FileLocation {
+                page: Some(42),
+                start: Some(1200),
+                end: Some(1202),
+            },
+        );
+
+        assert_eq!(
+            reference.location,
+            ReferenceLocation::FileLocation {
+                page: Some(42),
+                start: Some(1200),
+                end: Some(1202),
+            }
+        );
+    }
+
+    #[test]
+    fn reference_has_unique_identity() {
+        let source = EntityId::new();
+        let target = EntityId::new();
+
+        let first = Reference::new(
+            source,
+            EntityType::Note,
+            target,
+            EntityType::Vocabulary,
+            ReferenceLocation::CharacterRange {
+                start: 0,
+                end: 2,
+            },
+        );
+
+        let second = Reference::new(
+            source,
+            EntityType::Note,
+            target,
+            EntityType::Vocabulary,
+            ReferenceLocation::CharacterRange {
+                start: 0,
+                end: 2,
+            },
+        );
+
+        assert_ne!(first.id, second.id);
+    }
 
         #[test]
     fn token_can_reference_vocabulary() {
@@ -97,29 +177,30 @@ mod tests {
         assert_eq!(relationship.kind, RelationshipKind::References);
     }
 
-    #[test]
-    fn reference_preserves_location() {
-        let source = EntityId::new();
-        let target = EntityId::new();
+#[test]
+fn reference_preserves_location() {
+    let source = EntityId::new();
+    let target = EntityId::new();
 
-        let reference = Reference {
-            id: EntityId::new(),
-            source,
-            target,
-            location: ReferenceLocation::CharacterRange {
-                start: 5,
-                end: 7,
-            },
-        };
+    let reference = Reference::new(
+        source,
+        EntityType::Note,
+        target,
+        EntityType::Vocabulary,
+        ReferenceLocation::CharacterRange {
+            start: 5,
+            end: 7,
+        },
+    );
 
-        assert_eq!(reference.source, source);
-        assert_eq!(reference.target, target);
-        assert_eq!(
-            reference.location,
-            ReferenceLocation::CharacterRange {
-                start: 5,
-                end: 7,
-            }
-        );
-    }
+    assert_eq!(reference.source, source);
+    assert_eq!(reference.target, target);
+    assert_eq!(
+        reference.location,
+        ReferenceLocation::CharacterRange {
+            start: 5,
+            end: 7,
+        }
+    );
+}
 }
