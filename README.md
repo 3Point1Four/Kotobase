@@ -1,6 +1,6 @@
 # 言葉SE — Kotobase
 
-![KOTOBASE logo](https://github.com/3Point1Four/Kotobase/assets/kotobase_white.png)
+![KOTOBASE logo](https://github.com/3Point1Four/Kotobase/blob/main/assets/kotobase_white.png)
 
 **Kotobase** is a Japanese language guide built for people who want more than a translator. It reads text the way a learner needs to see it — word by word, tag by tag — and turns every sentence into a study surface: click a word, see its grammar role, save it, link it to your own notes, and watch related words connect themselves as your personal dictionary grows.
 
