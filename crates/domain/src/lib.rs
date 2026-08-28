@@ -5,6 +5,7 @@ pub mod reference;
 pub mod relationship;
 pub mod sentence;
 pub mod vocabulary;
+pub mod reference_index;
 
 pub use grammar::GrammarPattern;
 pub use id::EntityId;
@@ -13,10 +14,138 @@ pub use reference::{EntityType, Reference, ReferenceLocation};
 pub use relationship::{Relationship, RelationshipKind, RelationshipMetadata};
 pub use sentence::{GrammarMatch, Sentence, Token};
 pub use vocabulary::{PartOfSpeech, VocabularyEntry};
+pub use reference_index::ReferenceIndex;
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+fn reference_index_can_query_by_target() {
+    let source = EntityId::new();
+    let target = EntityId::new();
+
+    let reference = Reference::new(
+        source,
+        EntityType::Note,
+        target,
+        EntityType::Vocabulary,
+        ReferenceLocation::CharacterRange {
+            start: 0,
+            end: 2,
+        },
+    );
+
+    let mut index = ReferenceIndex::new();
+    index.add(reference.clone());
+
+    let references = index.by_target(target);
+
+    assert_eq!(references.len(), 1);
+    assert_eq!(references[0].id, reference.id);
+}
+
+#[test]
+fn reference_index_can_query_by_source() {
+    let source = EntityId::new();
+    let first_target = EntityId::new();
+    let second_target = EntityId::new();
+
+    let first = Reference::new(
+        source,
+        EntityType::Note,
+        first_target,
+        EntityType::Vocabulary,
+        ReferenceLocation::CharacterRange {
+            start: 0,
+            end: 2,
+        },
+    );
+
+    let second = Reference::new(
+        source,
+        EntityType::Note,
+        second_target,
+        EntityType::Kanji,
+        ReferenceLocation::CharacterRange {
+            start: 3,
+            end: 4,
+        },
+    );
+
+    let mut index = ReferenceIndex::new();
+
+    index.add(first);
+    index.add(second);
+
+    assert_eq!(index.by_source(source).len(), 2);
+}
+
+#[test]
+fn reference_index_supports_bidirectional_queries() {
+    let note = EntityId::new();
+    let vocabulary = EntityId::new();
+
+    let reference = Reference::new(
+        note,
+        EntityType::Note,
+        vocabulary,
+        EntityType::Vocabulary,
+        ReferenceLocation::CharacterRange {
+            start: 5,
+            end: 7,
+        },
+    );
+
+    let mut index = ReferenceIndex::new();
+    index.add(reference.clone());
+
+    assert_eq!(index.by_source(note).len(), 1);
+    assert_eq!(index.by_target(vocabulary).len(), 1);
+
+    assert_eq!(index.by_source(note)[0].id, reference.id);
+    assert_eq!(index.by_target(vocabulary)[0].id, reference.id);
+}
+
+#[test]
+fn reference_index_can_remove_a_reference() {
+    let source = EntityId::new();
+    let target = EntityId::new();
+
+    let reference = Reference::new(
+        source,
+        EntityType::Note,
+        target,
+        EntityType::Vocabulary,
+        ReferenceLocation::CharacterRange {
+            start: 0,
+            end: 2,
+        },
+    );
+
+    let reference_id = reference.id;
+
+    let mut index = ReferenceIndex::new();
+    index.add(reference);
+
+    assert_eq!(index.len(), 1);
+
+    assert!(index.remove(reference_id));
+
+    assert_eq!(index.len(), 0);
+    assert!(index.by_source(source).is_empty());
+    assert!(index.by_target(target).is_empty());
+}
+
+#[test]
+fn reference_index_returns_empty_for_unknown_entities() {
+    let index = ReferenceIndex::new();
+    let unknown = EntityId::new();
+
+    assert!(index.by_source(unknown).is_empty());
+    assert!(index.by_target(unknown).is_empty());
+    assert!(index.is_empty());
+}
 
     #[test]
 fn relationship_has_no_metadata_by_default() {
