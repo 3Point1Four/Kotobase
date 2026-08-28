@@ -38,26 +38,27 @@ This was my effort to push a method to curb all of that. Most translation tools 
 
 ## Core Features
 
-### :lantern: Context aware
+<details> <summary> :lantern: Context aware </summary></br>
 :mahjong: Text isn't just translated — it's broken down. Every word is tagged with grammatical context (part of speech, conjugation, function in the sentence) and rendered as a clickable element you can inspect, save, or link.
-
-### :arrows_counterclockwise: Interactive
+</details>
+<details><summary> :arrows_counterclockwise: Interactive</summary></br>
 :trackball: Click any word to pull up its breakdown. Highlighted words carry context with them — hovering or clicking surfaces readings, meanings, grammar notes, and related entries without leaving the page.
-
-### :pencil2: Notes
+</details>
+<details><summary> :pencil2: Notes </summary></br>
 :notebook: Attach your own notes to individual words, phrases, or full sessions. Notes aren't siloed — you can link them to each other, to saved vocabulary, or to specific grammar points, building your own connected web of understanding over time.
-
-### :knot: Connectivity
+</details>
+<details><summary> :knot: Connectivity </summary></br>
 :link: Kotobase surfaces relationships you didn't manually create — shared kanji, recurring grammar patterns, related vocabulary — and highlights them as your library of saved words and notes grows.
-
-### :open_file_folder: Sessions
+</details>
+<details> <summary> :open_file_folder: Sessions </summary></br>
 :card_index_dividers: Save a translation session as a whole: the source text, the tags, your notes, and the connections made during that session, so you can return to it exactly as you left it.
-
-### :label: Linking files
+</details>
+<details><summary> :label: Linking files </summary></br>
 :koko: Attach and reference external files (readings, media, other notes) directly into your study sessions and word entries.
-
-### :art: Customization
+</details>
+<details><summary> :art: Customization </summary></br>
 :paintbrush: This is meant to feel like *your* space. Structure your notes, organize your tags, and shape the workflow around how you personally learn — not a one-size-fits-all layout.
+</details>
 
 ---
 
