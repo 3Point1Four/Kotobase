@@ -10,13 +10,77 @@ pub use grammar::GrammarPattern;
 pub use id::EntityId;
 pub use kanji::KanjiEntry;
 pub use reference::{EntityType, Reference, ReferenceLocation};
-pub use relationship::{Relationship, RelationshipKind};
+pub use relationship::{Relationship, RelationshipKind, RelationshipMetadata};
 pub use sentence::{GrammarMatch, Sentence, Token};
 pub use vocabulary::{PartOfSpeech, VocabularyEntry};
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+fn relationship_has_no_metadata_by_default() {
+    let source = EntityId::new();
+    let target = EntityId::new();
+
+    let relationship =
+        Relationship::new(source, target, RelationshipKind::References);
+
+    assert_eq!(relationship.metadata.label, None);
+    assert_eq!(relationship.metadata.context, None);
+}
+
+#[test]
+fn relationship_can_store_metadata() {
+    let source = EntityId::new();
+    let target = EntityId::new();
+
+    let mut metadata = RelationshipMetadata::new();
+    metadata.label = Some("Important vocabulary".to_string());
+    metadata.context = Some("Words I regularly confuse".to_string());
+
+    let relationship = Relationship::with_metadata(
+        source,
+        target,
+        RelationshipKind::References,
+        metadata,
+    );
+
+    assert_eq!(
+        relationship.metadata.label.as_deref(),
+        Some("Important vocabulary")
+    );
+
+    assert_eq!(
+        relationship.metadata.context.as_deref(),
+        Some("Words I regularly confuse")
+    );
+}
+
+#[test]
+fn relationship_supports_semantic_relationship_kinds() {
+    let source = EntityId::new();
+    let target = EntityId::new();
+
+    let kinds = [
+        RelationshipKind::Contains,
+        RelationshipKind::References,
+        RelationshipKind::Uses,
+        RelationshipKind::ExampleOf,
+        RelationshipKind::Explains,
+        RelationshipKind::Translates,
+        RelationshipKind::DerivedFrom,
+        RelationshipKind::RelatedTo,
+    ];
+
+    for kind in kinds {
+        let relationship = Relationship::new(source, target, kind);
+
+        assert_eq!(relationship.source, source);
+        assert_eq!(relationship.target, target);
+        assert_eq!(relationship.kind, kind);
+    }
+}
 
         #[test]
     fn reference_identifies_source_and_target_types() {
