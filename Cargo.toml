@@ -1,5 +1,8 @@
 [workspace]
-resolver = "3"
 members = [
-    "crates/app", "crates/domain",
+    "crates/app",
+    "crates/domain",
+    "crates/storage",
 ]
+
+resolver = "3"
