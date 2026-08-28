@@ -16,7 +16,6 @@ I started my journey studying Japanese before I could even understood the fundam
 
 This was my effort to push a method to curb all of that. Most translation tools give you an output and nothing else. You get the meaning and lose the *mechanics*. Kotobase aims to start from the opposite direction and meet you where you learn - translation is the entry point, not the destination. Every piece of text you bring in becomes something you can take apart, annotate, and reconnect with over time.
 
-> [!NOTE]
 > - **Translate**, but also **understand why** — grammar and structure are separated instead of a simple output.
 > - **Tag and click** any word to see its role in context — particle, verb conjugation, counter, honorific, etc.
 > - **Take notes** the way you actually think — attach them to a word, a sentence, or a whole session.
