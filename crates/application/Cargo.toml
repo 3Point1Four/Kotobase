@@ -7,3 +7,6 @@ edition = "2021"
 domain = { path = "../domain" }
 storage = { path = "../storage" }
 sqlx = { version = "0.8", features = ["runtime-tokio", "sqlite"] }
+
+[dev-dependencies]
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
