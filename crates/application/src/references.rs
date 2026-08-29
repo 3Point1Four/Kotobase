@@ -4,48 +4,64 @@ use domain::{
     Reference,
     ReferenceLocation,
 };
+use storage::repositories::ReferenceRepository;
+use storage::repositories::VocabularyRepository;
 
-pub struct ReferenceService;
+pub struct ReferenceService<'a> {
+    repository: ReferenceRepository<'a>,
+}
 
-impl ReferenceService {
-    pub fn new() -> Self {
-        Self
+impl<'a> ReferenceService<'a> {
+    pub fn new(repository: ReferenceRepository<'a>) -> Self {
+        Self { repository }
     }
 
-    pub fn create(
+    pub async fn create(
         &self,
         source: EntityId,
         source_type: EntityType,
         target: EntityId,
         target_type: EntityType,
         location: ReferenceLocation,
-    ) -> Reference {
-        Reference::new(
+    ) -> Result<Reference, sqlx::Error> {
+        let reference = Reference::new(
             source,
             source_type,
             target,
             target_type,
             location,
-        )
+        );
+
+        self.repository.insert(&reference).await?;
+
+        Ok(reference)
     }
 
-    pub fn source_of(
+    pub async fn get(
         &self,
-        reference: &Reference,
-    ) -> EntityId {
-        reference.source
+        id: EntityId,
+    ) -> Result<Option<Reference>, sqlx::Error> {
+        self.repository.get(id).await
     }
 
-    pub fn target_of(
+    pub async fn by_source(
         &self,
-        reference: &Reference,
-    ) -> EntityId {
-        reference.target
+        source: EntityId,
+    ) -> Result<Vec<Reference>, sqlx::Error> {
+        self.repository.by_source(source).await
     }
-}
 
-impl Default for ReferenceService {
-    fn default() -> Self {
-        Self::new()
+    pub async fn by_target(
+        &self,
+        target: EntityId,
+    ) -> Result<Vec<Reference>, sqlx::Error> {
+        self.repository.by_target(target).await
+    }
+
+    pub async fn delete(
+        &self,
+        id: EntityId,
+    ) -> Result<bool, sqlx::Error> {
+        self.repository.delete(id).await
     }
 }

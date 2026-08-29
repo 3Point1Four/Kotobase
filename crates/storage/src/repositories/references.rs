@@ -204,12 +204,12 @@ fn reference_from_row(
     row: sqlx::sqlite::SqliteRow,
 ) -> Result<Reference, sqlx::Error> {
     let id = parse_entity_id(row.try_get::<String, _>("id")?)?;
-    let source = parse_entity_id(
-        row.try_get::<String, _>("source_id")?,
-    )?;
-    let target = parse_entity_id(
-        row.try_get::<String, _>("target_id")?,
-    )?;
+
+    let source =
+        parse_entity_id(row.try_get::<String, _>("source_id")?)?;
+
+    let target =
+        parse_entity_id(row.try_get::<String, _>("target_id")?)?;
 
     let source_type = entity_type_from_string(
         row.try_get::<String, _>("source_type")?,
