@@ -5,7 +5,6 @@ use domain::{
     ReferenceLocation,
 };
 use storage::repositories::ReferenceRepository;
-use storage::repositories::VocabularyRepository;
 
 pub struct ReferenceService<'a> {
     repository: ReferenceRepository<'a>,
