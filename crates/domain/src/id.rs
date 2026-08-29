@@ -11,6 +11,11 @@ impl EntityId {
         Self(Uuid::new_v4())
     }
 
+    /// Creates an entity ID from an existing UUID.
+    pub fn from_uuid(uuid: Uuid) -> Self {
+        Self(uuid)
+    }
+
     /// Returns the underlying UUID.
     pub fn as_uuid(&self) -> Uuid {
         self.0

@@ -1,3 +1,5 @@
+pub mod repositories;
+
 use sqlx::sqlite::SqlitePool;
 
 /// Creates a SQLite connection pool.
@@ -38,7 +40,7 @@ mod tests {
             sqlx::query_scalar("SELECT COUNT(*) FROM entity_references")
                 .fetch_one(&pool)
                 .await
-                .expect("failed to query references");
+                .expect("failed to query entity_references");
 
         assert_eq!(relationship_count, 0);
         assert_eq!(reference_count, 0);
