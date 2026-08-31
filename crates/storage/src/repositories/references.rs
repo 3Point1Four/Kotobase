@@ -123,6 +123,25 @@ impl<'a> ReferenceRepository<'a> {
         row.map(reference_from_row).transpose()
     }
 
+        pub async fn exists(
+        &self,
+        id: EntityId,
+    ) -> Result<bool, sqlx::Error> {
+        let result = sqlx::query(
+            r#"
+            SELECT 1
+            FROM entity_references
+            WHERE id = ?
+            LIMIT 1
+            "#,
+        )
+        .bind(id.as_uuid().to_string())
+        .fetch_optional(self.pool)
+        .await?;
+
+        Ok(result.is_some())
+    }
+
     pub async fn delete(
         &self,
         id: EntityId,
@@ -363,5 +382,446 @@ fn entity_type_from_string(
         "proverb" => Ok(EntityType::Proverb),
         "study_session" => Ok(EntityType::StudySession),
         _ => Err(invalid_data("unknown entity type")),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::initialize_database;
+    use domain::{EntityType, Reference, ReferenceLocation};
+    use sqlx::sqlite::SqlitePoolOptions;
+
+    async fn test_pool() -> SqlitePool {
+        let pool = SqlitePoolOptions::new()
+            .max_connections(1)
+            .connect(":memory:")
+            .await
+            .expect("failed to create test database");
+
+        initialize_database(&pool)
+            .await
+            .expect("failed to run migrations");
+
+        pool
+    }
+
+    fn test_reference(
+        location: ReferenceLocation,
+    ) -> Reference {
+        Reference::new(
+            EntityId::new(),
+            EntityType::Sentence,
+            EntityId::new(),
+            EntityType::Vocabulary,
+            location,
+        )
+    }
+
+    #[tokio::test]
+    async fn insert_and_get_character_range() {
+        let pool = test_pool().await;
+        let repository = ReferenceRepository::new(&pool);
+
+        let reference = test_reference(
+            ReferenceLocation::CharacterRange {
+                start: 4,
+                end: 9,
+            },
+        );
+
+        repository
+            .insert(&reference)
+            .await
+            .expect("failed to insert reference");
+
+        let loaded = repository
+            .get(reference.id)
+            .await
+            .expect("failed to get reference")
+            .expect("reference was not found");
+
+        assert_eq!(loaded, reference);
+    }
+
+    #[tokio::test]
+    async fn insert_and_get_token_range() {
+        let pool = test_pool().await;
+        let repository = ReferenceRepository::new(&pool);
+
+        let reference = test_reference(
+            ReferenceLocation::TokenRange {
+                start: 2,
+                end: 5,
+            },
+        );
+
+        repository
+            .insert(&reference)
+            .await
+            .expect("failed to insert reference");
+
+        let loaded = repository
+            .get(reference.id)
+            .await
+            .expect("failed to get reference")
+            .expect("reference was not found");
+
+        assert_eq!(loaded, reference);
+    }
+
+    #[tokio::test]
+    async fn insert_and_get_page_location() {
+        let pool = test_pool().await;
+        let repository = ReferenceRepository::new(&pool);
+
+        let reference = test_reference(
+            ReferenceLocation::Page {
+                page: 17,
+            },
+        );
+
+        repository
+            .insert(&reference)
+            .await
+            .expect("failed to insert reference");
+
+        let loaded = repository
+            .get(reference.id)
+            .await
+            .expect("failed to get reference")
+            .expect("reference was not found");
+
+        assert_eq!(loaded, reference);
+    }
+
+    #[tokio::test]
+    async fn insert_and_get_block_location() {
+        let pool = test_pool().await;
+        let repository = ReferenceRepository::new(&pool);
+
+        let block_id = EntityId::new();
+
+        let reference = test_reference(
+            ReferenceLocation::Block {
+                block_id,
+            },
+        );
+
+        repository
+            .insert(&reference)
+            .await
+            .expect("failed to insert reference");
+
+        let loaded = repository
+            .get(reference.id)
+            .await
+            .expect("failed to get reference")
+            .expect("reference was not found");
+
+        assert_eq!(loaded, reference);
+    }
+
+    #[tokio::test]
+    async fn insert_and_get_file_location() {
+        let pool = test_pool().await;
+        let repository = ReferenceRepository::new(&pool);
+
+        let reference = test_reference(
+            ReferenceLocation::FileLocation {
+                page: Some(3),
+                start: Some(120),
+                end: Some(145),
+            },
+        );
+
+        repository
+            .insert(&reference)
+            .await
+            .expect("failed to insert reference");
+
+        let loaded = repository
+            .get(reference.id)
+            .await
+            .expect("failed to get reference")
+            .expect("reference was not found");
+
+        assert_eq!(loaded, reference);
+    }
+
+    #[tokio::test]
+    async fn file_location_preserves_optional_values() {
+        let pool = test_pool().await;
+        let repository = ReferenceRepository::new(&pool);
+
+        let reference = test_reference(
+            ReferenceLocation::FileLocation {
+                page: None,
+                start: None,
+                end: None,
+            },
+        );
+
+        repository
+            .insert(&reference)
+            .await
+            .expect("failed to insert reference");
+
+        let loaded = repository
+            .get(reference.id)
+            .await
+            .expect("failed to get reference")
+            .expect("reference was not found");
+
+        assert_eq!(loaded, reference);
+    }
+
+    #[tokio::test]
+    async fn get_returns_none_for_unknown_reference() {
+        let pool = test_pool().await;
+        let repository = ReferenceRepository::new(&pool);
+
+        let result = repository
+            .get(EntityId::new())
+            .await
+            .expect("failed to query reference");
+
+        assert!(result.is_none());
+    }
+
+    #[tokio::test]
+    async fn exists_returns_true_for_inserted_reference() {
+        let pool = test_pool().await;
+        let repository = ReferenceRepository::new(&pool);
+
+        let reference = test_reference(
+            ReferenceLocation::Page { page: 1 },
+        );
+
+        repository
+            .insert(&reference)
+            .await
+            .expect("failed to insert reference");
+
+        assert!(
+            repository
+                .exists(reference.id)
+                .await
+                .expect("failed to check existence")
+        );
+    }
+
+    #[tokio::test]
+    async fn exists_returns_false_for_unknown_reference() {
+        let pool = test_pool().await;
+        let repository = ReferenceRepository::new(&pool);
+
+        assert!(
+            !repository
+                .exists(EntityId::new())
+                .await
+                .expect("failed to check existence")
+        );
+    }
+
+    #[tokio::test]
+    async fn delete_removes_reference() {
+        let pool = test_pool().await;
+        let repository = ReferenceRepository::new(&pool);
+
+        let reference = test_reference(
+            ReferenceLocation::Page { page: 2 },
+        );
+
+        repository
+            .insert(&reference)
+            .await
+            .expect("failed to insert reference");
+
+        assert!(
+            repository
+                .delete(reference.id)
+                .await
+                .expect("failed to delete reference")
+        );
+
+        assert!(
+            repository
+                .get(reference.id)
+                .await
+                .expect("failed to get reference")
+                .is_none()
+        );
+    }
+
+    #[tokio::test]
+    async fn delete_returns_false_for_unknown_reference() {
+        let pool = test_pool().await;
+        let repository = ReferenceRepository::new(&pool);
+
+        assert!(
+            !repository
+                .delete(EntityId::new())
+                .await
+                .expect("failed to delete reference")
+        );
+    }
+
+    #[tokio::test]
+    async fn by_source_returns_matching_references() {
+        let pool = test_pool().await;
+        let repository = ReferenceRepository::new(&pool);
+
+        let source = EntityId::new();
+
+        let first = Reference::new(
+            source,
+            EntityType::Sentence,
+            EntityId::new(),
+            EntityType::Vocabulary,
+            ReferenceLocation::CharacterRange {
+                start: 0,
+                end: 2,
+            },
+        );
+
+        let second = Reference::new(
+            source,
+            EntityType::Sentence,
+            EntityId::new(),
+            EntityType::Kanji,
+            ReferenceLocation::TokenRange {
+                start: 3,
+                end: 4,
+            },
+        );
+
+        let unrelated = test_reference(
+            ReferenceLocation::Page { page: 9 },
+        );
+
+        repository
+            .insert(&first)
+            .await
+            .expect("failed to insert first reference");
+
+        repository
+            .insert(&second)
+            .await
+            .expect("failed to insert second reference");
+
+        repository
+            .insert(&unrelated)
+            .await
+            .expect("failed to insert unrelated reference");
+
+        let references = repository
+            .by_source(source)
+            .await
+            .expect("failed to query by source");
+
+        assert_eq!(references.len(), 2);
+        assert!(references.iter().any(|r| r.id == first.id));
+        assert!(references.iter().any(|r| r.id == second.id));
+        assert!(
+            references
+                .iter()
+                .all(|r| r.id != unrelated.id)
+        );
+    }
+
+    #[tokio::test]
+    async fn by_target_returns_matching_references() {
+        let pool = test_pool().await;
+        let repository = ReferenceRepository::new(&pool);
+
+        let target = EntityId::new();
+
+        let first = Reference::new(
+            EntityId::new(),
+            EntityType::Sentence,
+            target,
+            EntityType::Vocabulary,
+            ReferenceLocation::Page { page: 1 },
+        );
+
+        let second = Reference::new(
+            EntityId::new(),
+            EntityType::Note,
+            target,
+            EntityType::Kanji,
+            ReferenceLocation::Block {
+                block_id: EntityId::new(),
+            },
+        );
+
+        let unrelated = test_reference(
+            ReferenceLocation::Page { page: 9 },
+        );
+
+        repository
+            .insert(&first)
+            .await
+            .expect("failed to insert first reference");
+
+        repository
+            .insert(&second)
+            .await
+            .expect("failed to insert second reference");
+
+        repository
+            .insert(&unrelated)
+            .await
+            .expect("failed to insert unrelated reference");
+
+        let references = repository
+            .by_target(target)
+            .await
+            .expect("failed to query by target");
+
+        assert_eq!(references.len(), 2);
+        assert!(references.iter().any(|r| r.id == first.id));
+        assert!(references.iter().any(|r| r.id == second.id));
+        assert!(
+            references
+                .iter()
+                .all(|r| r.id != unrelated.id)
+        );
+    }
+
+    #[tokio::test]
+    async fn duplicate_reference_id_fails() {
+        let pool = test_pool().await;
+        let repository = ReferenceRepository::new(&pool);
+
+        let reference = test_reference(
+            ReferenceLocation::Page { page: 1 },
+        );
+
+        repository
+            .insert(&reference)
+            .await
+            .expect("failed to insert reference");
+
+        let duplicate = Reference {
+            id: reference.id,
+            source: EntityId::new(),
+            source_type: EntityType::Note,
+            target: EntityId::new(),
+            target_type: EntityType::Kanji,
+            location: ReferenceLocation::Page { page: 2 },
+        };
+
+        assert!(
+            repository.insert(&duplicate).await.is_err()
+        );
+
+        let loaded = repository
+            .get(reference.id)
+            .await
+            .expect("failed to get original reference")
+            .expect("original reference disappeared");
+
+        assert_eq!(loaded, reference);
     }
 }
