@@ -64,3 +64,207 @@ impl<'a> ReferenceService<'a> {
         self.repository.delete(id).await
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use sqlx::sqlite::SqlitePoolOptions;
+
+    async fn setup() -> sqlx::SqlitePool {
+        let pool = SqlitePoolOptions::new()
+            .max_connections(1)
+            .connect(":memory:")
+            .await
+            .expect("failed to create test database");
+
+        storage::initialize_database(&pool)
+            .await
+            .expect("failed to run migrations");
+
+        pool
+    }
+
+    fn sample_location() -> ReferenceLocation {
+    ReferenceLocation::FileLocation {
+        page: Some(2),
+        start: Some(10),
+        end: Some(14),
+    }
+}
+
+    #[tokio::test]
+    async fn create_and_get_reference() {
+        let pool = setup().await;
+        let repository = ReferenceRepository::new(&pool);
+        let service = ReferenceService::new(repository);
+
+        let source = EntityId::new();
+        let target = EntityId::new();
+
+        let reference = service
+            .create(
+                source,
+                EntityType::Vocabulary,
+                target,
+                EntityType::Kanji,
+                sample_location(),
+            )
+            .await
+            .expect("failed to create reference");
+
+        let loaded = service
+            .get(reference.id)
+            .await
+            .expect("failed to get reference")
+            .expect("reference was not found");
+
+        assert_eq!(loaded, reference);
+    }
+
+    #[tokio::test]
+    async fn by_source_finds_reference() {
+        let pool = setup().await;
+        let repository = ReferenceRepository::new(&pool);
+        let service = ReferenceService::new(repository);
+
+        let source = EntityId::new();
+        let target = EntityId::new();
+
+        let reference = service
+            .create(
+                source,
+                EntityType::Vocabulary,
+                target,
+                EntityType::Kanji,
+                sample_location(),
+            )
+            .await
+            .expect("failed to create reference");
+
+        let references = service
+            .by_source(source)
+            .await
+            .expect("failed to query references");
+
+        assert_eq!(references.len(), 1);
+        assert_eq!(references[0], reference);
+    }
+
+    #[tokio::test]
+    async fn by_target_finds_reference() {
+        let pool = setup().await;
+        let repository = ReferenceRepository::new(&pool);
+        let service = ReferenceService::new(repository);
+
+        let source = EntityId::new();
+        let target = EntityId::new();
+
+        let reference = service
+            .create(
+                source,
+                EntityType::Vocabulary,
+                target,
+                EntityType::Kanji,
+                sample_location(),
+            )
+            .await
+            .expect("failed to create reference");
+
+        let references = service
+            .by_target(target)
+            .await
+            .expect("failed to query references");
+
+        assert_eq!(references.len(), 1);
+        assert_eq!(references[0], reference);
+    }
+
+    #[tokio::test]
+    async fn by_source_returns_empty_for_unknown_entity() {
+        let pool = setup().await;
+        let repository = ReferenceRepository::new(&pool);
+        let service = ReferenceService::new(repository);
+
+        let references = service
+            .by_source(EntityId::new())
+            .await
+            .expect("failed to query references");
+
+        assert!(references.is_empty());
+    }
+
+    #[tokio::test]
+    async fn by_target_returns_empty_for_unknown_entity() {
+        let pool = setup().await;
+        let repository = ReferenceRepository::new(&pool);
+        let service = ReferenceService::new(repository);
+
+        let references = service
+            .by_target(EntityId::new())
+            .await
+            .expect("failed to query references");
+
+        assert!(references.is_empty());
+    }
+
+    #[tokio::test]
+    async fn get_returns_none_for_unknown_reference() {
+        let pool = setup().await;
+        let repository = ReferenceRepository::new(&pool);
+        let service = ReferenceService::new(repository);
+
+        let result = service
+            .get(EntityId::new())
+            .await
+            .expect("failed to get reference");
+
+        assert!(result.is_none());
+    }
+
+    #[tokio::test]
+    async fn delete_removes_reference() {
+        let pool = setup().await;
+        let repository = ReferenceRepository::new(&pool);
+        let service = ReferenceService::new(repository);
+
+        let reference = service
+            .create(
+                EntityId::new(),
+                EntityType::Vocabulary,
+                EntityId::new(),
+                EntityType::Kanji,
+                sample_location(),
+            )
+            .await
+            .expect("failed to create reference");
+
+        assert!(
+            service
+                .delete(reference.id)
+                .await
+                .expect("failed to delete reference")
+        );
+
+        assert!(
+            service
+                .get(reference.id)
+                .await
+                .expect("failed to get reference")
+                .is_none()
+        );
+    }
+
+    #[tokio::test]
+    async fn deleting_unknown_reference_returns_false() {
+        let pool = setup().await;
+        let repository = ReferenceRepository::new(&pool);
+        let service = ReferenceService::new(repository);
+
+        assert!(
+            !service
+                .delete(EntityId::new())
+                .await
+                .expect("failed to delete reference")
+        );
+    }
+}
