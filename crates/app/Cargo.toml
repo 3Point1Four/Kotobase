@@ -1,0 +1,15 @@
+[package]
+name = "app"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+domain = { path = "../domain" }
+storage = { path = "../storage" }
+application = { path = "../application" }
+
+sqlx = { version = "0.8.6", features = ["runtime-tokio", "sqlite"] }
+tokio = { version = "1.53.1", features = ["macros", "rt-multi-thread"] }
+
+eframe = "0.32"
+image = { version = "0.25", default-features = false, features = ["png", "jpeg"] }
